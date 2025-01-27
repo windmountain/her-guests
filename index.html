@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+	<meta charset="UTF-8">
+	<title>HBR S3 Guests</title>
+	<script src="https://cdn.jsdelivr.net/npm/@fireproof/core/dist/browser/fireproof.global.js"></script>
+	<style>
+		button + button {
+			margin-right: 1em;
+		}
+	</style>
+	<script>
+		const db = Fireproof.fireproof("hbr-s3-guests");
+		const knownIdeas = [
+			{
+				_id: "marcia_chatelain",
+				name: "Marcia Chatelain",
+			}, {
+				_id: "wiley_staley",
+				name: "Wiley Staley",
+			}, {
+				_id: "fabrizio_di_muro",
+				name: "Fabrizio Di Miuro",
+			}, {
+				_id: "jerome_jacobson",
+				name: "Jerome \"Jerry\" Jacobson",
+			}, {
+				_id: "paul_goodman",
+				name: "Paul Goodman",
+			}, {
+				_id: "jello_biafra",
+				name: "Jello Biafra",
+			}, {
+				_id: "jan_fields",
+				name: "Jan Fields",
+			}, {
+				_id: "chris_kempczinski",
+				name: "Chris Kempczinski",
+			}, {
+				_id: "gary_he",
+				name: "Gary He",
+			}, {
+				_id: "kamala_harris",
+				name: "Kamala Harris",
+			}, {
+				_id: "donald_trump",
+				name: "Donald Trump",
+			}, {
+				_id: "ian_urbina",
+				name: "Ian Urbina",
+			}
+		]
+		const seed = () => {
+			// TODO: make this work only when the db is empty, or something
+			knownIdeas.forEach((guest) => {
+				db.put({
+					...guest,
+					votes: 0
+				})
+			})
+		}
+		const vote = (id, points) => {
+			return async (e) => {
+				const guest = await db.get(id);
+				const current = guest.votes ? guest.votes : 0;
+				guest.votes = current + points;
+				await db.put(guest);
+			}
+		}
+		db.subscribe(async () => {
+			/* Can't query by "votes", {descending: true} because it excludes 0 vote guests? */
+			const guests = await db.query("name");
+			const guestsList = document.getElementById("guests");
+			const guestTemplate = document.getElementById("guest-template");
+			sorted = guests.rows.sort((a, b) => (b.doc.votes || 0) - (a.doc.votes || 0));
+			guestsList.replaceChildren();
+			sorted.forEach((g) => {
+
+				let upBtn = document.createElement('button')
+				upBtn.textContent = "↑";
+				upBtn.onclick = vote(g.doc._id, 1);
+
+				let downBtn = document.createElement('button')
+				downBtn.textContent = "↓";
+				downBtn.onclick = vote(g.doc._id, -1);
+
+				let template = guestTemplate.content.cloneNode(true);
+				let li = template.querySelector('li');
+				let span = template.querySelector('span');
+				li.prepend(downBtn);
+				li.prepend(upBtn);
+				span.textContent = g.doc.name + " / " + g.doc.votes;
+
+				guestsList.append(li);
+			})
+		});
+	</script>
+</head>
+
+<body>
+	<h1>HBR S3 Guests</h1>
+	<ul id="guests">
+	</ul>
+	<button onclick="addKnowns()">add knowns</button>
+	<template id="guest-template">
+		<li class="guest"><span></span></li>
+	</template>
+</body>
+
+</html>

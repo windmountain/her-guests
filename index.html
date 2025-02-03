@@ -57,6 +57,7 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      margin-block-end: 4rem;
     }
 
     form label {
@@ -92,7 +93,7 @@
     }
 
     footer {
-      margin: 16rem 0 4rem;
+      margin: 12rem 0 4rem;
     }
   </style>
   <script>
@@ -206,6 +207,9 @@
 
         guestsList.append(li);
       })
+
+      footer = document.getElementById("seed");
+      footer.style.display = guests.rows.length ? "none" : "block";
     });
   </script>
 </head>
@@ -231,9 +235,9 @@
     </label>
     <input type="submit"></input>
   </form>
-  <footer>
-    <p>Please don't click this button, it will reset all guest's votes to zero:</p>
-    <button class="seed" onclick="seed()">seed</button>
+  <footer id="seed">
+    <p>You're the first person here! Add some favorites:</p>
+    <button onclick="seed()">Add Favorites</button>
   </footer>
   <template id="guest-template">
     <li class="guest">

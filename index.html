@@ -2,110 +2,254 @@
 <html lang="en-US">
 
 <head>
-	<meta charset="UTF-8">
-	<title>HBR S3 Guests</title>
-	<script src="https://cdn.jsdelivr.net/npm/@fireproof/core/dist/browser/fireproof.global.js"></script>
-	<style>
-		button + button {
-			margin-right: 1em;
-		}
-	</style>
-	<script>
-		const db = Fireproof.fireproof("hbr-s3-guests");
-		const knownIdeas = [
-			{
-				_id: "marcia_chatelain",
-				name: "Marcia Chatelain",
-			}, {
-				_id: "wiley_staley",
-				name: "Wiley Staley",
-			}, {
-				_id: "fabrizio_di_muro",
-				name: "Fabrizio Di Miuro",
-			}, {
-				_id: "jerome_jacobson",
-				name: "Jerome \"Jerry\" Jacobson",
-			}, {
-				_id: "paul_goodman",
-				name: "Paul Goodman",
-			}, {
-				_id: "jello_biafra",
-				name: "Jello Biafra",
-			}, {
-				_id: "jan_fields",
-				name: "Jan Fields",
-			}, {
-				_id: "chris_kempczinski",
-				name: "Chris Kempczinski",
-			}, {
-				_id: "gary_he",
-				name: "Gary He",
-			}, {
-				_id: "kamala_harris",
-				name: "Kamala Harris",
-			}, {
-				_id: "donald_trump",
-				name: "Donald Trump",
-			}, {
-				_id: "ian_urbina",
-				name: "Ian Urbina",
-			}
-		]
-		const seed = () => {
-			// TODO: make this work only when the db is empty, or something
-			knownIdeas.forEach((guest) => {
-				db.put({
-					...guest,
-					votes: 0
-				})
-			})
-		}
-		const vote = (id, points) => {
-			return async (e) => {
-				const guest = await db.get(id);
-				const current = guest.votes ? guest.votes : 0;
-				guest.votes = current + points;
-				await db.put(guest);
-			}
-		}
-		db.subscribe(async () => {
-			/* Can't query by "votes", {descending: true} because it excludes 0 vote guests? */
-			const guests = await db.query("name");
-			const guestsList = document.getElementById("guests");
-			const guestTemplate = document.getElementById("guest-template");
-			sorted = guests.rows.sort((a, b) => (b.doc.votes || 0) - (a.doc.votes || 0));
-			guestsList.replaceChildren();
-			sorted.forEach((g) => {
+  <meta charset="UTF-8">
+  <title>HBR S3 Guests</title>
+  <script src="https://cdn.jsdelivr.net/npm/@fireproof/core/dist/browser/fireproof.global.js"></script>
+  <style>
+    body {
+      max-width: 30rem;
+      box-sizing: border-box;
+      margin: 0 auto;
+    }
 
-				let upBtn = document.createElement('button')
-				upBtn.textContent = "↑";
-				upBtn.onclick = vote(g.doc._id, 1);
+    header {
+      display: flex;
+      justify-content: space-between;
+    }
 
-				let downBtn = document.createElement('button')
-				downBtn.textContent = "↓";
-				downBtn.onclick = vote(g.doc._id, -1);
+    h1 {
+      align-self: flex-end
+    }
 
-				let template = guestTemplate.content.cloneNode(true);
-				let li = template.querySelector('li');
-				let span = template.querySelector('span');
-				li.prepend(downBtn);
-				li.prepend(upBtn);
-				span.textContent = g.doc.name + " / " + g.doc.votes;
+    .star {
+      --foo: 200px;
+      font-size: 1rem;
+      justify-content: center;
+      font-family: sans-serif;
+      text-transform: uppercase;
+      background-image: url(/star.svg);
+      border-radius: calc(var(--foo)/2);
+      background-size: var(--foo);
+      width: 9.5rem;
+      height: 9.5rem;
+      padding: 48px 24px 0;
+      text-align: center;
+      transform: rotate(10deg);
+    }
 
-				guestsList.append(li);
-			})
-		});
-	</script>
+    ul {
+      padding: 0;
+    }
+
+    li {
+      display: grid;
+      grid-template-columns: 60px 10fr;
+      gap: 1rem;
+      margin-block-end: 1rem;
+    }
+
+    menu {
+      padding: 0;
+      text-align: right;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    form label {
+      display: block;
+    }
+
+    form textarea {
+      width: 100%;
+      height: 3rem;
+    }
+
+    label span {
+      display: block;
+    }
+
+    input[type=submit] {
+      width: intrinsic;
+    }
+
+    .guest button {
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
+      margin: 0;
+      border-radius: 0.75rem;
+      background: #EEE;
+      border-width: 1px;
+    }
+
+    .bio {
+      font-style: italic;
+      margin: 0;
+    }
+
+    footer {
+      margin: 16rem 0 4rem;
+    }
+  </style>
+  <script>
+    const db = Fireproof.fireproof("hbr-s3-guests");
+    const knownIdeas = [
+      {
+        _id: "marcia_chatelain",
+        name: "Marcia Chatelain",
+        description: "Pulitzer prize winning author of Franchise: The Golden Arches in Black America. Professor at Georgetown and U Penn.",
+      }, {
+        _id: "wiley_staley",
+        name: "Wiley Staley",
+        description: "NYT Staff Editor, author of 2011 piece A Conspiracy of Hogs: The McRib as Arbitrage.",
+      }, {
+        _id: "fabrizio_di_muro",
+        name: "Fabrizio Di Miuro",
+        description: "Author of numerous business case studies for Quick Service Restaurants, many of them previously covered on HBR."
+      }, {
+        _id: "jerome_jacobson",
+        name: "Jerome \"Jerry\" Jacobson",
+        description: "Former head of security at the marketing company that printed the McDonald's Monopoly game, convicted of mail fraud."
+      }, {
+        _id: "paul_goodman",
+        name: "Paul Goodman",
+        description: "Paul Goodman Group, proud owner of numerous NYC and NYC Metro McDonald's."
+      }, {
+        _id: "jello_biafra",
+        name: "Jello Biafra",
+        description: "Former Dead Kennedy's front man and signer of Wesley Willis (Rock and Roll McDonald's) to Alternative Tentacles records."
+      }, {
+        _id: "jan_fields",
+        name: "Jan Fields",
+        description: "Held every role in the management chain of McDonald's, beginning as a crew member and ending as president of McDonald's USA. Subject of a case study covered on HBR."
+      }, {
+        _id: "chris_kempczinski",
+        name: "Chris Kempczinski",
+        description: "Current CEO of McDonald's."
+      }, {
+        _id: "gary_he",
+        name: "Gary He",
+        description: "Photographer, food writer, author of McAtlas: A Global Guide to the Golden Arches."
+      }, {
+        _id: "kamala_harris",
+        name: "Kamala Harris",
+        description: "Former McDonald's fry cook and Vice President of the United States."
+      }, {
+        _id: "donald_trump",
+        name: "Donald Trump",
+        description: "Fan of the brand, current President of the United States."
+      }
+    ]
+    const seed = () => {
+      // TODO: make this work only when the db is empty, or something
+      knownIdeas.forEach((guest) => {
+        db.put({
+          ...guest,
+          votes: 0
+        })
+      })
+    }
+    const vote = (id, points) => {
+      return async (e) => {
+        const guest = await db.get(id);
+        const current = guest.votes ? guest.votes : 0;
+        guest.votes = current + points;
+        await db.put(guest);
+      }
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("form");
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const entries = Object.fromEntries(formData.entries());
+        db.put({
+          votes: 0,
+          name: entries.name,
+          description: entries.bio
+        })
+      })
+    })
+    db.subscribe(async () => {
+      /* Can't query by "votes", {descending: true} because it excludes 0 vote guests? */
+      const guests = await db.query("name");
+      const guestsList = document.getElementById("guests");
+      const guestTemplate = document.getElementById("guest-template");
+      sorted = guests.rows.sort((a, b) => (b.doc.votes || 0) - (a.doc.votes || 0));
+      guestsList.replaceChildren();
+      sorted.forEach((g) => {
+
+        let template = guestTemplate.content.cloneNode(true);
+        let li = template.querySelector('li');
+
+        let span = template.querySelector('.name');
+        span.textContent = g.doc.name;
+
+        let upBtn = template.querySelector('.up');
+        upBtn.onclick = vote(g.doc._id, 1);
+
+        let downBtn = template.querySelector('.down');
+        downBtn.onclick = vote(g.doc._id, -1);
+
+        let bio = template.querySelector('.bio');
+        bio.append(document.createTextNode(g.doc.description))
+
+        let votes = template.querySelector('.votes');
+        votes.textContent = g.doc.votes;
+
+        let name = template.querySelector('.name');
+        name.textContent = g.doc.name;
+
+        guestsList.append(li);
+      })
+    });
+  </script>
 </head>
 
 <body>
-	<h1>HBR S3 Guests</h1>
-	<ul id="guests">
-	</ul>
-	<button onclick="addKnowns()">add knowns</button>
-	<template id="guest-template">
-		<li class="guest"><span></span></li>
-	</template>
+  <header>
+    <h1>HBR S3 Guests</h1>
+    <h2 class="star">
+      <span></span>Vote for your favorites no more than once per guest please (honor system) thank you</span>
+    </h2>
+  </header>
+  <ul id="guests">
+  </ul>
+  <form>
+    <h2>Add Guest</h2>
+    <label>
+      <span>Name</span>
+      <input type="text" name="name"></input>
+    </label>
+    <label>
+      <span>Bio</span>
+      <textarea name="bio"></textarea>
+    </label>
+    <input type="submit"></input>
+  </form>
+  <footer>
+    <p>Please don't click this button, it will reset all guest's votes to zero:</p>
+    <button class="seed" onclick="seed()">seed</button>
+  </footer>
+  <template id="guest-template">
+    <li class="guest">
+      <menu>
+        <button tabindex="0" class="up">↑</button>
+        <button tabindex="0" class="down">↓</button>
+      </menu>
+      <div>
+        <span>
+          <span class="name"></span> /
+          <span class="votes"></span>
+        </span>
+        <p class="bio"></p>
+      </div>
+    </li>
+  </template>
 </body>
 
 </html>

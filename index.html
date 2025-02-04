@@ -96,8 +96,11 @@
       margin: 12rem 0 4rem;
     }
   </style>
-  <script>
+  <script type="module">
+    import { connect, rawConnect } from "https://esm.sh/@fireproof/cloud"
+    console.log(connect, rawConnect);
     const db = Fireproof.fireproof("hbr-s3-guests");
+    // rawConnect(db, "hbr-s3-guests");
     const knownIdeas = [
       {
         _id: "marcia_chatelain",
@@ -154,6 +157,7 @@
         })
       })
     }
+    window.seed = seed;
     const vote = (id, points) => {
       return async (e) => {
         const guest = await db.get(id);
@@ -180,35 +184,35 @@
       const guests = await db.query("name");
       const guestsList = document.getElementById("guests");
       const guestTemplate = document.getElementById("guest-template");
-      sorted = guests.rows.sort((a, b) => (b.doc.votes || 0) - (a.doc.votes || 0));
+      const sorted = guests.rows.sort((a, b) => (b.doc.votes || 0) - (a.doc.votes || 0));
       guestsList.replaceChildren();
       sorted.forEach((g) => {
 
-        let template = guestTemplate.content.cloneNode(true);
-        let li = template.querySelector('li');
+        const template = guestTemplate.content.cloneNode(true);
+        const li = template.querySelector('li');
 
-        let span = template.querySelector('.name');
+        const span = template.querySelector('.name');
         span.textContent = g.doc.name;
 
-        let upBtn = template.querySelector('.up');
+        const upBtn = template.querySelector('.up');
         upBtn.onclick = vote(g.doc._id, 1);
 
-        let downBtn = template.querySelector('.down');
+        const downBtn = template.querySelector('.down');
         downBtn.onclick = vote(g.doc._id, -1);
 
-        let bio = template.querySelector('.bio');
+        const bio = template.querySelector('.bio');
         bio.append(document.createTextNode(g.doc.description))
 
-        let votes = template.querySelector('.votes');
+        const votes = template.querySelector('.votes');
         votes.textContent = g.doc.votes;
 
-        let name = template.querySelector('.name');
+        const name = template.querySelector('.name');
         name.textContent = g.doc.name;
 
         guestsList.append(li);
       })
 
-      footer = document.getElementById("seed");
+      const footer = document.getElementById("seed");
       footer.style.display = guests.rows.length ? "none" : "block";
     });
   </script>
@@ -236,8 +240,8 @@
     <input type="submit"></input>
   </form>
   <footer id="seed">
-    <p>You're the first person here! Add some favorites:</p>
-    <button onclick="seed()">Add Favorites</button>
+    <p>You're the first person here</p>
+    <button onclick="window.seed()">Start with Zach's list</button>
   </footer>
   <template id="guest-template">
     <li class="guest">
